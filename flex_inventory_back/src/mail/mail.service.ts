@@ -2,6 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import { CreateReservationDto } from '../reservation/dto/create-reservation.dto';
+import { ReservationStatus } from 'src/reservation/entities/reservation.entity';
 
 @Injectable()
 export class MailService {
@@ -116,6 +117,118 @@ export class MailService {
         </div>
         <div class="footer">
             <p>Truck Reservation System - Admin Notification</p>
+        </div>
+    </div>
+</body>
+</html>
+    `;
+  }
+
+  async sendStatusUpdate(
+    driverEmail: string,
+    firstName: string,
+    lastName: string,
+    status: ReservationStatus,
+  ): Promise<void> {
+    let subject: string;
+    let html: string;
+
+    switch (status) {
+      case ReservationStatus.COLLECT:
+        subject = 'Your Documents Are Ready for Collection';
+        html = this.getCollectTemplate(firstName, lastName);
+        break;
+      case ReservationStatus.ISSUE:
+        subject = 'Action Required: Issue with Your Reservation';
+        html = this.getIssueTemplate(firstName, lastName);
+        break;
+      default:
+        return; // Don't send email for other statuses
+    }
+
+    await this.mailerService.sendMail({
+      to: driverEmail,
+      subject,
+      html,
+    });
+  }
+
+  private getCollectTemplate(firstName: string, lastName: string): string {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #d4edda; padding: 20px; text-align: center; border-radius: 5px; }
+        .content { padding: 20px; background: #fff; }
+        .instruction { background: #e7f3ff; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Documents Ready for Collection</h1>
+        </div>
+        <div class="content">
+            <h2>Hello ${firstName} ${lastName},</h2>
+            <p>Thank you for your waiting! Your documents are now ready and processed.</p>
+            
+            <div class="instruction">
+                <h3>📋 Next Steps:</h3>
+                <p><strong>Please go to the office to collect your documents and paperwork.</strong></p>
+                <p>Our office staff will assist you with the final steps and provide you with all the necessary materials.</p>
+            </div>
+            
+            <p>We appreciate your business and look forward to serving you!</p>
+        </div>
+        <div class="footer">
+            <p>Flex_vry Truck Reservation System</p>
+        </div>
+    </div>
+</body>
+</html>
+    `;
+  }
+
+  private getIssueTemplate(firstName: string, lastName: string): string {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #f8d7da; padding: 20px; text-align: center; border-radius: 5px; }
+        .content { padding: 20px; background: #fff; }
+        .alert { background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚠️ Action Required: Issue with Your Reservation</h1>
+        </div>
+        <div class="content">
+            <h2>Hello ${firstName} ${lastName},</h2>
+            
+            <div class="alert">
+                <h3>Important Notice</h3>
+                <p>The information you provided appears to be missing or incorrect.</p>
+            </div>
+            
+            <h3>What you need to do:</h3>
+            <p><strong>Please contact your boss or supervisor immediately</strong> to review and send us the correct information.</p>
+            
+            <p>Once we receive the correct information, we'll be able to process your reservation and get you back on track.</p>
+            
+            <p>If you have any questions, please don't hesitate to contact our support team.</p>
+        </div>
+        <div class="footer">
+            <p>Flex_vry Truck Reservation System</p>
         </div>
     </div>
 </body>

@@ -1,5 +1,17 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { IsEmail, IsPhoneNumber, IsArray } from 'class-validator';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { IsEmail, IsEnum, IsArray } from 'class-validator';
+
+export enum ReservationStatus {
+  PENDING = 'pending',
+  COLLECT = 'collect',
+  ISSUE = 'issue',
+}
 
 @Entity('reservations')
 export class Reservation {
@@ -37,6 +49,14 @@ export class Reservation {
 
   @Column({ type: 'time' })
   time: string;
+
+  @Column({
+    type: 'enum',
+    enum: ReservationStatus,
+    default: ReservationStatus.PENDING,
+  })
+  @IsEnum(ReservationStatus)
+  status: ReservationStatus;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

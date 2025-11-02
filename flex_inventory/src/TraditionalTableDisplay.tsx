@@ -7,8 +7,9 @@ import {
   getTodayDate,
   LIMIT,
 } from "./utils/Commens";
-
-interface Reservation {
+import { ChevronLeft } from "lucide-react";
+import StatusDropdown from "./components/StatusDropdown";
+export interface Reservation {
   id: string;
   name: string;
   lastName: string;
@@ -18,6 +19,7 @@ interface Reservation {
   trailerNumber: string;
   truckNumber: string;
   references: string[];
+  status: string;
   date: string;
   time: string;
 }
@@ -33,7 +35,47 @@ const ReservationSystem: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
 
+  // Initialize from URL parameters on component mount
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlDate = urlParams.get("date");
+    const urlSearch = urlParams.get("search");
+    const urlPage = urlParams.get("page");
+
+    if (urlDate) setSelectedDate(urlDate);
+    if (urlSearch) setSearch(urlSearch);
+    if (urlPage) setPage(parseInt(urlPage));
+  }, []);
+
+  // Update URL parameters whenever filters change
+  const updateURLParams = () => {
+    const url = new URL(window.location.href);
+
+    if (selectedDate) {
+      url.searchParams.set("date", selectedDate);
+    } else {
+      url.searchParams.delete("date");
+    }
+
+    if (search) {
+      url.searchParams.set("search", search);
+    } else {
+      url.searchParams.delete("search");
+    }
+
+    if (page > 1) {
+      url.searchParams.set("page", page.toString());
+    } else {
+      url.searchParams.delete("page");
+    }
+
+    window.history.replaceState({}, "", url.toString());
+  };
+
+  // Fetch reservations with URL sync
+
+  // ✅ Extract fetch logic into a function
+  const fetchReservations = () => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: LIMIT.toString(),
@@ -44,33 +86,37 @@ const ReservationSystem: React.FC = () => {
     }
 
     if (selectedDate) {
-      params.append("date", selectedDate); // only append if a date is selected
+      params.append("date", selectedDate);
     }
 
     fetch(`${API_BASE_URL}/reservations?${params.toString()}`)
       .then((res) => res.json())
       .then((data) => {
-        console.log("data", data);
         setReservations(data.data);
         setTotalPages(Math.ceil(data.total / data.limit));
       })
       .catch((err) => console.error("Error fetching reservations:", err));
+
+    // Update URL after fetch
+    updateURLParams();
+  };
+
+  useEffect(() => {
+    fetchReservations();
   }, [page, search, selectedDate]);
 
   const pagination = usePagination({ page, totalPages, setPage });
 
-  // Filter reservations when date or time changes - FIXED
+  // Filter reservations when date or time changes
   useEffect(() => {
     let filtered = reservations;
 
-    // Filter by date - FIXED: Use consistent date formatting
     if (selectedDate) {
       filtered = filtered.filter(
         (res) => formatDateForComparison(res.date) === selectedDate
       );
     }
 
-    // Filter by time
     if (selectedTime) {
       filtered = filtered.filter((res) => res.time === selectedTime);
     }
@@ -78,7 +124,7 @@ const ReservationSystem: React.FC = () => {
     setFilteredReservations(filtered);
   }, [selectedDate, selectedTime, reservations]);
 
-  // Get unique dates from reservations for dropdown - FIXED
+  // Get unique dates from reservations for dropdown
   const getUniqueDates = () => {
     const dates = [
       ...new Set(reservations.map((res) => formatDateForComparison(res.date))),
@@ -92,33 +138,56 @@ const ReservationSystem: React.FC = () => {
     return times.sort((a, b) => a.localeCompare(b));
   };
 
-  // Function to clear all reservations - UPDATED for API
+  // Updated handler functions with URL sync
+  const handleTodayClick = () => {
+    const today = getTodayDate();
+    setSelectedDate(today);
+    setSelectedTime("");
+    setSearch("");
+    setPage(1);
+  };
+
+  const handleAllDatesClick = () => {
+    setSelectedDate("");
+    setSelectedTime("");
+    setSearch("");
+    setPage(1);
+  };
+
+  const handleDateChange = (date: string) => {
+    setSelectedDate(date);
+    setSelectedTime("");
+    setPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  // Function to clear all reservations
   const clearAllReservations = async () => {
     if (window.confirm("Are you sure you want to clear all reservations?")) {
       try {
-        // If you want to delete all via API, you'll need to implement this endpoint
-        // For now, just clear the local state
         setReservations([]);
         setFilteredReservations([]);
         setSelectedDate(getTodayDate());
         setSelectedTime("");
-
-        // Optional: Call API to delete all reservations
-        // await fetch(`${API_BASE_URL}/reservations`, { method: 'DELETE' });
+        setSearch("");
+        setPage(1);
       } catch (error) {
         console.error("Error clearing reservations:", error);
       }
     }
   };
 
-  // Function to delete single reservation - UPDATED for API
+  // Function to delete single reservation
   const deleteReservation = async (id: string) => {
     try {
       await fetch(`${API_BASE_URL}/reservations/${id}`, {
         method: "DELETE",
       });
 
-      // Update local state after successful deletion
       const updatedReservations = reservations.filter((res) => res.id !== id);
       setReservations(updatedReservations);
     } catch (error) {
@@ -130,9 +199,11 @@ const ReservationSystem: React.FC = () => {
   const resetFilters = () => {
     setSelectedDate(getTodayDate());
     setSelectedTime("");
+    setSearch("");
+    setPage(1);
   };
 
-  // Calculate today's reservations count - FIXED
+  // Calculate today's reservations count
   const getTodaysReservationsCount = () => {
     const today = getTodayDate();
     return reservations.filter(
@@ -147,10 +218,22 @@ const ReservationSystem: React.FC = () => {
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
             <div className="mb-4 lg:mb-0">
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                Reservations
-              </h1>
-              <p className="text-gray-600">
+<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+  {/* Back Button */}
+  <NavLink
+    to="/"
+    className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center w-fit"
+  >
+    <ChevronLeft className="w-6 h-6 text-gray-700" />
+  </NavLink>
+
+  {/* Title */}
+  <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center sm:text-left">
+    Reservations
+  </h1>
+</div>
+
+              <p className="text-gray-600 ml-10">
                 Showing {filteredReservations?.length} of {reservations?.length}{" "}
                 reservations
                 {selectedDate && ` for ${selectedDate}`}
@@ -177,142 +260,126 @@ const ReservationSystem: React.FC = () => {
           </div>
 
           {/* Filter Controls */}
-          {
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Date Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Filter by Date
-                  </label>
-                  <select
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">All Dates</option>
-                    {getUniqueDates().map((date) => (
-                      <option key={date} value={date}>
-                        {new Date(date).toLocaleDateString("en-US", {
-                          weekday: "short",
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Filter by Date
-                  </label>
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-
-                {/* Time Filter */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Filter by Time
-                  </label>
-                  <select
-                    value={selectedTime}
-                    onChange={(e) => setSelectedTime(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">All Times</option>
-                    {getUniqueTimes().map((time) => (
-                      <option key={time} value={time}>
-                        {time}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {
-                  /*name filter */
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Filter Name Ref phone
-                    </label>
-                    <input
-                      type="text"
-                      name="search"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="ex: Name Phone Reference Truck Trailer	Reference"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                }
-
-                {/* Quick Date Filters */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Quick Filters
-                  </label>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => setSelectedDate(getTodayDate())}
-                      className={`cursor-pointer flex-1 px-3 py-2 rounded-lg text-sm font-medium transition duration-200 ${
-                        selectedDate === getTodayDate()
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                      }`}
-                    >
-                      Today
-                    </button>
-                    <button
-                      onClick={() => setSelectedDate("")}
-                      className={`cursor-pointer flex-1 px-3 py-2 rounded-lg text-sm font-medium transition duration-200 ${
-                        selectedDate === ""
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                      }`}
-                    >
-                      All Dates
-                    </button>
-                  </div>
-                </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Date Picker - FIXED */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Filter by Date
+                </label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => handleDateChange(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
 
-              {/* Active Filters Display */}
-              {(selectedDate || selectedTime) && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {selectedDate && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      Date: {selectedDate}
-                      <button
-                        onClick={() => setSelectedDate("")}
-                        className="cursor-pointer ml-1 hover:text-blue-600"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  )}
-                  {selectedTime && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Time: {selectedTime}
-                      <button
-                        onClick={() => setSelectedTime("")}
-                        className="ml-1 hover:text-green-600"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  )}
+              {/* Time Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Filter by Time
+                </label>
+                <select
+                  value={selectedTime}
+                  onChange={(e) => setSelectedTime(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All Times</option>
+                  {getUniqueTimes().map((time) => (
+                    <option key={time} value={time}>
+                      {time}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Search Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Search Name/Phone/Reference
+                </label>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  placeholder="ex: Name Phone Reference Truck Trailer"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              {/* Quick Date Filters */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Quick Filters
+                </label>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleTodayClick}
+                    className={`cursor-pointer flex-1 px-3 py-2 rounded-lg text-sm font-medium transition duration-200 ${
+                      selectedDate === getTodayDate()
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={handleAllDatesClick}
+                    className={`cursor-pointer flex-1 px-3 py-2 rounded-lg text-sm font-medium transition duration-200 ${
+                      selectedDate === ""
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    }`}
+                  >
+                    All Dates
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
-          }
+
+            {/* Active Filters Display */}
+            {(selectedDate || selectedTime || search) && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {selectedDate && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Date: {selectedDate}
+                    <button
+                      onClick={() => handleDateChange("")}
+                      className="cursor-pointer ml-1 hover:text-blue-600"
+                    >
+                      ×
+                    </button>
+                  </span>
+                )}
+                {selectedTime && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Time: {selectedTime}
+                    <button
+                      onClick={() => setSelectedTime("")}
+                      className="ml-1 hover:text-green-600"
+                    >
+                      ×
+                    </button>
+                  </span>
+                )}
+                {search && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    Search: {search}
+                    <button
+                      onClick={() => handleSearchChange("")}
+                      className="ml-1 hover:text-purple-600"
+                    >
+                      ×
+                    </button>
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Stats Cards - FIXED: Use the helper function */}
+        {/* Stats Cards */}
         {filteredReservations?.length > 0 && (
           <div className="mb-6 mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white rounded-lg shadow p-4">
@@ -348,17 +415,15 @@ const ReservationSystem: React.FC = () => {
         {/* Rest of your table code remains the same */}
         {filteredReservations?.length > 0 ? (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            {/* Your table code here */}
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
-                {/* Table headers and rows */}
                 <thead className="bg-gradient-to-r from-blue-600 to-indigo-600">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
                       Customer
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
-                      Phone
+                      status
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">
                       Date & Time
@@ -398,11 +463,28 @@ const ReservationSystem: React.FC = () => {
                             <div className="text-sm text-gray-500">
                               {reservation.email}
                             </div>
+                            <div className="text-sm text-gray-500">
+                              {reservation.phone}
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {reservation.phone}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+    ${
+      reservation.status.toLowerCase() === "pending"
+        ? "bg-yellow-100 text-yellow-800"
+        : reservation.status.toLowerCase() === "issue"
+        ? "bg-red-100 text-red-800"
+        : reservation.status.toLowerCase() === "collect"
+        ? "bg-green-100 text-green-800"
+        : "bg-gray-100 text-gray-800"
+    }
+  `}
+                        >
+                          {reservation.status.toUpperCase()}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900 font-medium">
@@ -433,6 +515,10 @@ const ReservationSystem: React.FC = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <StatusDropdown
+                          reservation={reservation}
+                          reloadReservations={fetchReservations}
+                        />
                         <button className="mr-2 from-blue-600 hover:text-blue-900 font-medium">
                           <NavLink
                             to={`/display-reservation/${reservation.id}`}

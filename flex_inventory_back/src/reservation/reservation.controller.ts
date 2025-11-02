@@ -13,6 +13,7 @@ import { ReservationService } from './reservation.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { Reservation } from './entities/reservation.entity';
+import { UpdateReservationStatusDto } from './dto/update-reservation-status.dto';
 
 @Controller('reservations')
 export class ReservationController {
@@ -52,6 +53,14 @@ export class ReservationController {
     @Body() updateReservationDto: UpdateReservationDto,
   ): Promise<Reservation> {
     return this.reservationService.update(id, updateReservationDto);
+  }
+
+  @Patch(':id/status')
+  async updateStatus(
+    @Param('id') id: string,
+    @Body() updateStatusDto: UpdateReservationStatusDto,
+  ): Promise<Reservation> {
+    return this.reservationService.updateStatus(id, updateStatusDto);
   }
 
   @Delete(':id')

@@ -2,9 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Reservation } from './entities/reservation.entity';
+import { Reservation, ReservationStatus } from './entities/reservation.entity';
 import { ILike, Raw, Repository } from 'typeorm';
 import { MailService } from 'src/mail/mail.service';
+import { UpdateReservationStatusDto } from './dto/update-reservation-status.dto';
 
 @Injectable()
 export class ReservationService {
@@ -26,7 +27,6 @@ export class ReservationService {
       const reservation =
         this.reservationRepository.create(createReservationDto);
       return await this.reservationRepository.save(reservation);
-      
     } catch (error) {
       console.error('Error sending emails:', error);
     }
@@ -43,7 +43,9 @@ export class ReservationService {
     page: number;
     limit: number;
   }> {
-    const skip = (page - 1) * limit;
+    const pageNumber = Number(page) || 1;
+    const limitNumber = Number(limit) || 10;
+    const skip = (pageNumber - 1) * limitNumber;
 
     const where: any[] = [];
 
@@ -69,9 +71,52 @@ export class ReservationService {
       take: limit,
     });
 
-    return { data, total, page, limit };
+    return { data, total, page: pageNumber, limit: limitNumber };
   }
 
+  async updateStatus(
+    id: string,
+    updateStatusDto: UpdateReservationStatusDto,
+  ): Promise<Reservation> {
+    const reservation = await this.reservationRepository.findOne({
+      where: { id },
+    });
+
+    if (!reservation) {
+      throw new NotFoundException(`Reservation with ID ${id} not found`);
+    }
+
+    // Store the old status to check if we need to send email
+    const oldStatus = reservation.status;
+    const newStatus = updateStatusDto.status;
+
+    // Update the status
+    reservation.status = newStatus;
+
+    const updatedReservation =
+      await this.reservationRepository.save(reservation);
+
+    // Send email notification if status changed to COLLECT or ISSUE
+    if (
+      oldStatus !== newStatus &&
+      (newStatus === ReservationStatus.COLLECT ||
+        newStatus === ReservationStatus.ISSUE)
+    ) {
+      try {
+        await this.mailService.sendStatusUpdate(
+          reservation.email,
+          reservation.name,
+          reservation.lastName,
+          newStatus,
+        );
+      } catch (error) {
+        // Log the error but don't fail the request
+        console.error('Failed to send status update email:', error);
+      }
+    }
+
+    return updatedReservation;
+  }
   async findOne(id: string): Promise<Reservation> {
     const reservation = await this.reservationRepository.findOne({
       where: { id },
