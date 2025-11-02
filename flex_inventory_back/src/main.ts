@@ -8,7 +8,7 @@ async function bootstrap() {
    const configService = app.get(ConfigService);
   // Enable CORS for all origins (development only)
   app.enableCors({
-    origin: true, // Allow all origins
+    origin: "https://flex-register.netlify.app/", // Allow all origins
     credentials: true,
   });
 
