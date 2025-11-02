@@ -20,6 +20,7 @@ const reservationSchema = z.object({
 type ReservationFormData = z.infer<typeof reservationSchema>;
 
 export default function CreateReservation() {
+  const API_BASE_URL = "http://localhost:4500";
   const [referenceCount, setReferenceCount] = useState(1);
 
   const {
@@ -57,29 +58,36 @@ export default function CreateReservation() {
     }
   };
 
-
-  const onSubmit = (data: ReservationFormData) => {
+  const onSubmit = async (data: ReservationFormData) => {
     const now = new Date();
+
+    // Create full reservation data
     const fullData = {
       ...data,
-      id: Date.now().toString(), // Add unique ID for each reservation
       date: now.toISOString().split("T")[0],
       time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    // Get existing reservations from localStorage or initialize empty array
-    const existingReservations = JSON.parse(
-      localStorage.getItem("reservations") || "[]"
-    );
+    try {
+      const response = await fetch(`${API_BASE_URL}/reservations/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(fullData),
+      });
 
-    // Add new reservation to the array
-    const updatedReservations = [...existingReservations, fullData];
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
 
-    // Save updated array back to localStorage
-    localStorage.setItem("reservations", JSON.stringify(updatedReservations));
-    reset();
-    setReferenceCount(1);
-    alert("Reservation created successfully!");
+      reset();
+      setReferenceCount(1);
+      alert("Reservation created successfully!");
+    } catch (error) {
+      console.error("Error creating reservation:", error);
+      alert("Failed to create reservation. Please try again.");
+    }
   };
 
   return (
@@ -225,7 +233,7 @@ export default function CreateReservation() {
               <button
                 type="button"
                 onClick={addReference}
-                className="text-blue-600 text-sm font-medium hover:underline"
+                className="cursor-pointer text-blue-600 text-sm font-medium hover:underline"
               >
                 + Add More
               </button>

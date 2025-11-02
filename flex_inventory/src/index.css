@@ -9,3 +9,285 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Container and layout */
+.pdf-container {
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, #eff6ff, #e0e7ff);
+  padding: 2rem 1rem;
+}
+
+.pdf-wrapper {
+  max-width: 1024px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.subtitle {
+  color: #4b5563;
+}
+
+/* Card */
+.card {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Section headers */
+.section-header {
+  padding: 1rem 1.5rem;
+  color: white;
+}
+
+.personal-header {
+  background: linear-gradient(to right, #2563eb, #4f46e5);
+}
+
+.vehicle-header {
+  background: linear-gradient(to right, #059669, #10b981);
+}
+
+.reference-header {
+  background: linear-gradient(to right, #7e22ce, #ec4899);
+}
+
+/* Section body */
+.section-body {
+  padding: 1.5rem;
+}
+
+/* Grid layout */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Info rows */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.label {
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.value {
+  color: #1f2937;
+}
+
+.email {
+  color: #2563eb;
+}
+
+.mono {
+  font-family: monospace;
+}
+
+/* Vehicle cards */
+.vehicle-card {
+  background: #f9fafb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.vehicle-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.vehicle-icon.blue {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.vehicle-icon.green {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.bold {
+  font-weight: 600;
+}
+
+/* References */
+.reference-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f5f3ff;
+  border: 1px solid #ede9fe;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.reference-index {
+  width: 32px;
+  height: 32px;
+  background: #ede9fe;
+  color: #7e22ce;
+  font-weight: bold;
+  font-size: 0.875rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reference-value {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.reference-tag {
+  background: #ede9fe;
+  color: #7e22ce;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-weight: 500;
+}
+
+/* Timeline */
+.timeline {
+  margin-top: 2rem;
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.timeline h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.timeline-steps {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.step {
+  text-align: center;
+}
+
+.step-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.5rem;
+  font-weight: bold;
+}
+
+.step-icon.green {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.step-icon.blue {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.step-icon.gray {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.step-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.step-date {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.step-line {
+  flex: 1;
+  height: 4px;
+  background: #e5e7eb;
+  margin: 0 1rem;
+}
+
+/* Buttons */
+.button-group {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn.blue {
+  background: #2563eb;
+}
+
+.btn.blue:hover {
+  background: #1d4ed8;
+}
+
+.btn.green {
+  background: #059669;
+}
+
+.btn.green:hover {
+  background: #047857;
+}
+
+.btn.gray {
+  background: #4b5563;
+}
+
+.btn.gray:hover {
+  background: #374151;
+}

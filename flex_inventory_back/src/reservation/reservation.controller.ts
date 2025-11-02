@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { ReservationService } from './reservation.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
@@ -9,13 +19,21 @@ export class ReservationController {
   constructor(private readonly reservationService: ReservationService) {}
 
   @Post()
-  create(@Body() createReservationDto: CreateReservationDto): Promise<Reservation> {
+  create(
+    @Body() createReservationDto: CreateReservationDto,
+  ): Promise<Reservation> {
     return this.reservationService.create(createReservationDto);
   }
 
   @Get()
-  findAll(): Promise<Reservation[]> {
-    return this.reservationService.findAll();
+  findAll(@Query() paginationDto: any) {
+    const { page, limit, search, date } = paginationDto;
+    return this.reservationService.findAll(
+      Number(page),
+      Number(limit),
+      search,
+      date,
+    );
   }
 
   @Get('email/:email')

@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router";
+import { usePagination } from "./hooks/usePagination";
+import {
+  API_BASE_URL,
+  formatDateForComparison,
+  getTodayDate,
+  LIMIT,
+} from "./utils/Commens";
 
 interface Reservation {
   id: string;
@@ -22,39 +29,35 @@ const ReservationSystem: React.FC = () => {
   >([]);
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [selectedTime, setSelectedTime] = useState<string>("");
-
-  // Fixed: Get today's date in consistent format
-  const getTodayDate = (): string => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`; // Local YYYY-MM-DD
-  };
-
-  // Fixed: Format date for consistent comparison
-  const formatDateForComparison = (dateString: string): string => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`; // Local YYYY-MM-DD
-  };
-  const API_BASE_URL = "http://localhost:4500";
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/reservations`)
-      .then((response) => response.json())
-      .then((data) => {
-        setReservations(data);
-        setFilteredReservations(data);
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: LIMIT.toString(),
+    });
 
-        // Set today's date as default filter
-        setSelectedDate(getTodayDate());
+    if (search && search.trim() !== "") {
+      params.append("search", search.trim());
+    }
+
+    if (selectedDate) {
+      params.append("date", selectedDate); // only append if a date is selected
+    }
+
+    fetch(`${API_BASE_URL}/reservations?${params.toString()}`)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("data", data);
+        setReservations(data.data);
+        setTotalPages(Math.ceil(data.total / data.limit));
       })
-      .catch((error) => console.error("Error fetching reservations:", error));
-  }, []);
+      .catch((err) => console.error("Error fetching reservations:", err));
+  }, [page, search, selectedDate]);
+
+  const pagination = usePagination({ page, totalPages, setPage });
 
   // Filter reservations when date or time changes - FIXED
   useEffect(() => {
@@ -148,18 +151,18 @@ const ReservationSystem: React.FC = () => {
                 Reservations
               </h1>
               <p className="text-gray-600">
-                Showing {filteredReservations.length} of {reservations.length}{" "}
+                Showing {filteredReservations?.length} of {reservations?.length}{" "}
                 reservations
                 {selectedDate && ` for ${selectedDate}`}
                 {selectedTime && ` at ${selectedTime}`}
               </p>
             </div>
 
-            {reservations.length > 0 && (
+            {reservations?.length > 0 && (
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={resetFilters}
-                  className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition duration-200 text-sm"
+                  className="cursor-pointer bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition duration-200 text-sm"
                 >
                   Reset Filters
                 </button>
@@ -174,7 +177,7 @@ const ReservationSystem: React.FC = () => {
           </div>
 
           {/* Filter Controls */}
-          {reservations.length > 0 && (
+          {
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Date Filter */}
@@ -201,6 +204,18 @@ const ReservationSystem: React.FC = () => {
                   </select>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Filter by Date
+                  </label>
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
                 {/* Time Filter */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -219,6 +234,22 @@ const ReservationSystem: React.FC = () => {
                     ))}
                   </select>
                 </div>
+                {
+                  /*name filter */
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Filter Name Ref phone
+                    </label>
+                    <input
+                      type="text"
+                      name="search"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="ex: Name Phone Reference Truck Trailer	Reference"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                }
 
                 {/* Quick Date Filters */}
                 <div>
@@ -278,16 +309,16 @@ const ReservationSystem: React.FC = () => {
                 </div>
               )}
             </div>
-          )}
+          }
         </div>
 
         {/* Stats Cards - FIXED: Use the helper function */}
-        {filteredReservations.length > 0 && (
+        {filteredReservations?.length > 0 && (
           <div className="mb-6 mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white rounded-lg shadow p-4">
               <div className="text-sm text-gray-500">Filtered Reservations</div>
               <div className="text-2xl font-bold text-gray-800">
-                {filteredReservations.length}
+                {filteredReservations?.length}
               </div>
             </div>
             <div className="bg-white rounded-lg shadow p-4">
@@ -315,7 +346,7 @@ const ReservationSystem: React.FC = () => {
         )}
 
         {/* Rest of your table code remains the same */}
-        {filteredReservations.length > 0 ? (
+        {filteredReservations?.length > 0 ? (
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             {/* Your table code here */}
             <div className="overflow-x-auto">
@@ -452,13 +483,15 @@ const ReservationSystem: React.FC = () => {
             {reservations.length > 0 && (
               <button
                 onClick={resetFilters}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200"
+                className="cursor-pointer bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200"
               >
                 Reset Filters
               </button>
             )}
           </div>
         )}
+
+        {reservations.length === 0 ? "" : pagination}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { IsEmail, IsPhoneNumber, IsArray, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsArray, IsNotEmpty } from 'class-validator';
 
 export class CreateReservationDto {
   @IsNotEmpty()
@@ -13,7 +13,7 @@ export class CreateReservationDto {
   @IsNotEmpty()
   driverLicense: string;
 
-  @IsPhoneNumber()
+  @IsNotEmpty()
   phone: string;
 
   @IsNotEmpty()

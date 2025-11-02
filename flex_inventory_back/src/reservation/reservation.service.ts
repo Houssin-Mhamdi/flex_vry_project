@@ -3,7 +3,7 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Reservation } from './entities/reservation.entity';
-import { Repository } from 'typeorm';
+import { ILike, Like, Raw, Repository } from 'typeorm';
 
 @Injectable()
 export class ReservationService {
@@ -19,10 +19,44 @@ export class ReservationService {
     return await this.reservationRepository.save(reservation);
   }
 
-  async findAll(): Promise<Reservation[]> {
-    return await this.reservationRepository.find({
+  async findAll(
+    page = 1,
+    limit = 10,
+    search?: string,
+    date?: string, // filter by date
+  ): Promise<{
+    data: Reservation[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const skip = (page - 1) * limit;
+
+    const where: any[] = [];
+
+    if (search) {
+      where.push(
+        { name: ILike(`%${search}%`) },
+        { phone: ILike(`%${search}%`) },
+        { trailerNumber: ILike(`%${search}%`) },
+        { truckNumber: ILike(`%${search}%`) },
+        { references: Raw((alias) => `${alias} LIKE '%${search}%'`) },
+      );
+    }
+
+    if (date) {
+      // Filter by exact date
+      where.push({ date }); // because column type is 'date', no need for Between
+    }
+
+    const [data, total] = await this.reservationRepository.findAndCount({
+      where: where.length ? where : {},
       order: { createdAt: 'DESC' },
+      skip,
+      take: limit,
     });
+
+    return { data, total, page, limit };
   }
 
   async findOne(id: string): Promise<Reservation> {
