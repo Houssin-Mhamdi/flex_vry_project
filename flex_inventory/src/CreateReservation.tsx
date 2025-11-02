@@ -3,6 +3,7 @@ import axios from "axios";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { API_BASE_URL } from "./utils/Commens";
 
 // ✅ Fixed Zod schema
 const reservationSchema = z.object({
@@ -21,7 +22,7 @@ const reservationSchema = z.object({
 type ReservationFormData = z.infer<typeof reservationSchema>;
 
 export default function CreateReservation() {
-  const API_BASE_URL = "http://localhost:4500";
+  
   const [referenceCount, setReferenceCount] = useState(1);
 
   const {
