@@ -15,25 +15,29 @@ export class ReservationService {
     private readonly mailService: MailService,
   ) {}
 
-  async create(createReservationDto: CreateReservationDto): Promise<Reservation> {
-    const { email, name, lastName } = createReservationDto;
-    const adminEmail = process.env.ADMIN_EMAIL || 'houssinmhamdi123@gmail.com';
+async create(createReservationDto: CreateReservationDto): Promise<Reservation> {
+  const { email, name, lastName } = createReservationDto;
+  const adminEmail = process.env.ADMIN_EMAIL || 'houssinmhamdi123@gmail.com';
 
-    try {
-      // Create and save the reservation
-      const reservation = this.reservationRepository.create(createReservationDto);
-      const savedReservation = await this.reservationRepository.save(reservation);
+  try {
+    // Create and save the reservation
+    const reservation = this.reservationRepository.create(createReservationDto);
+    const savedReservation = await this.reservationRepository.save(reservation);
 
-      // Send emails asynchronously without blocking the main operation
-      this.sendEmailsAsync(email, name, lastName, adminEmail, savedReservation.id);
-
-      console.log(`✅ Reservation created successfully for: ${email}`);
-      return savedReservation;
-    } catch (error) {
-      console.error(`❌ Error creating reservation for ${email}:`, error.message);
-      throw new Error('Failed to create reservation');
-    }
+    // Send emails asynchronously without blocking the main operation
+    console.log('🔄 About to call sendEmailsAsync...');
+    console.log(`Parameters: email=${email}, name=${name}, lastName=${lastName}, adminEmail=${adminEmail}, id=${savedReservation.id}`);
+    
+    this.sendEmailsAsync(email, name, lastName, adminEmail, savedReservation.id);
+    
+    console.log('📧 sendEmailsAsync called (async, not awaited)');
+    console.log(`✅ Reservation created successfully for: ${email}`);
+    return savedReservation;
+  } catch (error) {
+    console.error(`❌ Error creating reservation for ${email}:`, error.message);
+    throw new Error('Failed to create reservation');
   }
+}
 
   private async sendEmailsAsync(
     email: string,
