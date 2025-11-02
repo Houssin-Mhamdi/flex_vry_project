@@ -14,8 +14,8 @@ import { MailService } from './mail.service';
       useFactory: async (config: ConfigService) => {
         const smtpHost = config.get('SMTP_HOST') || 'smtp.gmail.com';
         const smtpPort = Number(config.get('SMTP_PORT')) || 587;
-        const smtpUser = config.get('SMTP_USER');
-        const smtpPass = config.get('SMTP_PASS');
+        const smtpUser = "houssin.carnelian@gmail.com";
+        const smtpPass = "hxru akng khzp kskp";
 
         // Validate required environment variables
         if (!smtpUser || !smtpPass) {
