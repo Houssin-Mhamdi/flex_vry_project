@@ -5,12 +5,9 @@ import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-   const configService = app.get(ConfigService);
+  const configService = app.get(ConfigService);
   // Enable CORS for all origins (development only)
-  app.enableCors({
-    origin: "https://flex-register.netlify.app/", // Allow all origins
-    credentials: true,
-  });
+  app.enableCors();
 
   // Enable CORS
   // app.enableCors({
@@ -36,9 +33,8 @@ async function bootstrap() {
   //   credentials: true,
   // });
 
-
   //   const isDevelopment = process.env.NODE_ENV === 'development';
-  
+
   // app.enableCors({
   //   origin: isDevelopment
   //     ? [
@@ -62,14 +58,13 @@ async function bootstrap() {
   //   ],
   //   credentials: true,
   // });
-  
 
   const allowedOrigins = configService.get('ALLOWED_ORIGINS')?.split(',') || [
     'http://localhost:3000',
     'http://localhost:5173',
     'http://localhost:4200',
   ];
-  
+
   // app.enableCors({
   //   origin: allowedOrigins,
   //   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -82,7 +77,7 @@ async function bootstrap() {
   //   ],
   //   credentials: true,
   // });
-  
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
