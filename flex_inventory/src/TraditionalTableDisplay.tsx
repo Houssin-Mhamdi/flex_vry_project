@@ -124,13 +124,6 @@ const ReservationSystem: React.FC = () => {
     setFilteredReservations(filtered);
   }, [selectedDate, selectedTime, reservations]);
 
-  // Get unique dates from reservations for dropdown
-  const getUniqueDates = () => {
-    const dates = [
-      ...new Set(reservations.map((res) => formatDateForComparison(res.date))),
-    ];
-    return dates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-  };
 
   // Get unique times from reservations for dropdown
   const getUniqueTimes = () => {
