@@ -1,32 +1,51 @@
 // mail/mail.module.ts
 import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
-import { MailService } from './mail.service';
+
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MailService } from './mail.service';
+
 
 @Module({
   imports: [
-    // You MUST import ConfigModule here
-    ConfigModule.forRoot({
-      isGlobal: true, // ensures env vars are available everywhere
-    }),
     MailerModule.forRootAsync({
-      imports: [ConfigModule], // required so ConfigService is available
-      inject: [ConfigService], // injects ConfigService into the factory
-      useFactory: async (config: ConfigService) => ({
-        transport: {
-          host: config.get('SMTP_HOST'),
-          port: Number(config.get('SMTP_PORT')),
-          secure: false, // false for 587, true for 465
-          auth: {
-            user: config.get('SMTP_USER'),
-            pass: config.get('SMTP_PASS'),
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => {
+        const smtpHost = config.get('SMTP_HOST') || 'smtp.gmail.com';
+        const smtpPort = Number(config.get('SMTP_PORT')) || 587;
+        const smtpUser = config.get('SMTP_USER');
+        const smtpPass = config.get('SMTP_PASS');
+
+        // Validate required environment variables
+        if (!smtpUser || !smtpPass) {
+          throw new Error(
+            'SMTP_USER and SMTP_PASS environment variables are required',
+          );
+        }
+
+        return {
+          transport: {
+            host: smtpHost,
+            port: smtpPort,
+            secure: smtpPort === 465, // true for 465, false for other ports
+            auth: {
+              user: smtpUser,
+              pass: smtpPass,
+            },
+            // Additional options for better reliability
+            tls: {
+              rejectUnauthorized: false, // For development, set to true in production
+            },
+            connectionTimeout: 10000, // 10 seconds
+            greetingTimeout: 10000, // 10 seconds
+            socketTimeout: 10000, // 10 seconds
           },
-        },
-        defaults: {
-          from: `"No Reply" <${config.get('SMTP_USER')}>`,
-        },
-      }),
+          defaults: {
+            from: `"Flex_vry Truck Reservation" <${smtpUser}>`,
+          },
+        };
+      },
     }),
   ],
   providers: [MailService],
