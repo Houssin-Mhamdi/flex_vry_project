@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ReservationModule } from './reservation/reservation.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ReservationModule } from './reservation/reservation.module';
       inject: [ConfigService],
     }),
     ReservationModule,
+    MailModule,
   ],
 })
 export class AppModule {}

@@ -3,20 +3,33 @@ import { CreateReservationDto } from './dto/create-reservation.dto';
 import { UpdateReservationDto } from './dto/update-reservation.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Reservation } from './entities/reservation.entity';
-import { ILike, Like, Raw, Repository } from 'typeorm';
+import { ILike, Raw, Repository } from 'typeorm';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class ReservationService {
   constructor(
     @InjectRepository(Reservation)
     private reservationRepository: Repository<Reservation>,
+    private readonly mailService: MailService,
   ) {}
 
   async create(
     createReservationDto: CreateReservationDto,
   ): Promise<Reservation> {
-    const reservation = this.reservationRepository.create(createReservationDto);
-    return await this.reservationRepository.save(reservation);
+    const { email, name, lastName } = createReservationDto;
+
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@yourcompany.com';
+    try {
+      await this.mailService.sendDriverConfirmation(email, name, lastName);
+      await this.mailService.sendAdminNotification(adminEmail, name, lastName);
+      const reservation =
+        this.reservationRepository.create(createReservationDto);
+      return await this.reservationRepository.save(reservation);
+      
+    } catch (error) {
+      console.error('Error sending emails:', error);
+    }
   }
 
   async findAll(
