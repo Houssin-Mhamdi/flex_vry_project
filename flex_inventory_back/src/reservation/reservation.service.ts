@@ -15,22 +15,54 @@ export class ReservationService {
     private readonly mailService: MailService,
   ) {}
 
-  async create(
-    createReservationDto: CreateReservationDto,
-  ): Promise<Reservation> {
+  async create(createReservationDto: CreateReservationDto): Promise<Reservation> {
     const { email, name, lastName } = createReservationDto;
+    const adminEmail = process.env.ADMIN_EMAIL || 'houssinmhamdi123@gmail.com';
 
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@yourcompany.com';
     try {
-      await this.mailService.sendDriverConfirmation(email, name, lastName);
-      await this.mailService.sendAdminNotification(adminEmail, name, lastName);
-      const reservation =
-        this.reservationRepository.create(createReservationDto);
-      return await this.reservationRepository.save(reservation);
+      // Create and save the reservation
+      const reservation = this.reservationRepository.create(createReservationDto);
+      const savedReservation = await this.reservationRepository.save(reservation);
+
+      // Send emails asynchronously without blocking the main operation
+      this.sendEmailsAsync(email, name, lastName, adminEmail, savedReservation.id);
+
+      console.log(`✅ Reservation created successfully for: ${email}`);
+      return savedReservation;
     } catch (error) {
-      console.error('Error sending emails:', error);
+      console.error(`❌ Error creating reservation for ${email}:`, error.message);
+      throw new Error('Failed to create reservation');
     }
   }
+
+  private async sendEmailsAsync(
+    email: string,
+    name: string,
+    lastName: string,
+    adminEmail: string,
+    reservationId: string,
+  ): Promise<void> {
+    try {
+      // Use Promise.allSettled to ensure one email failure doesn't affect the other
+      const results = await Promise.allSettled([
+        this.mailService.sendDriverConfirmation(email, name, lastName),
+        this.mailService.sendAdminNotification(adminEmail, name, lastName),
+      ]);
+
+      // Log results
+      results.forEach((result, index) => {
+        const emailType = index === 0 ? 'Driver Confirmation' : 'Admin Notification';
+        if (result.status === 'fulfilled') {
+          console.log(`✅ ${emailType} email sent successfully`);
+        } else {
+        console.error(`❌ ${emailType} email failed:`, result.reason);
+        }
+      });
+    } catch (error) {
+     console.error('Error in email sending process:', error);
+    }
+  }
+
 
   async findAll(
     page = 1,
