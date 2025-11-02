@@ -29,7 +29,7 @@ import { MailController } from './mail.controller';
               jsonTransport: true, // Logs emails instead of sending
             },
             defaults: {
-              from: '"Flex_vry Truck Reservation" <noreply@example.com>',
+              from: '"Flex_vry Truck Reservation" <houssinmhamdi123@gmail.com>',
             },
           };
         }
