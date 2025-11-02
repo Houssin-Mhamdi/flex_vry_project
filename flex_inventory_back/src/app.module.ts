@@ -23,8 +23,8 @@ import { MailModule } from './mail/mail.module';
       }),
       inject: [ConfigService],
     }),
-    ReservationModule,
     MailModule,
+    ReservationModule,
   ],
 })
 export class AppModule {}
