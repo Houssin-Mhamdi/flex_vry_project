@@ -1,6 +1,6 @@
 // BASE URL
 //  export const API_BASE_URL = "http://localhost:4500";
-export const API_BASE_URL = "https://flex-vry-project.onrender.com/";
+export const API_BASE_URL = "https://flex-vry-project.onrender.com";
 
 //LIMIT
 export const LIMIT = 5;

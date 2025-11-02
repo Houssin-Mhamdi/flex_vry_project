@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -69,24 +70,31 @@ export default function CreateReservation() {
     };
 
     try {
-      const response = await fetch(`${API_BASE_URL}/reservations/`, {
-        method: "POST",
+      await axios.post(`${API_BASE_URL}/reservations/`, fullData, {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(fullData),
+        // Uncomment the next line if you want to send cookies with the request
+        // withCredentials: true,
       });
-
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
 
       reset();
       setReferenceCount(1);
       alert("Reservation created successfully!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating reservation:", error);
-      alert("Failed to create reservation. Please try again.");
+      if (error.response) {
+        // Server responded with a status other than 2xx
+        alert(
+          `Failed to create reservation. Server error: ${error.response.status}`
+        );
+      } else if (error.request) {
+        // No response received
+        alert("No response from server. Please try again.");
+      } else {
+        // Other errors
+        alert(`Error: ${error.message}`);
+      }
     }
   };
 
