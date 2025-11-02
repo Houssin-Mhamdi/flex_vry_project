@@ -15,10 +15,12 @@ import { MailController } from './mail.controller';
         const smtpPort = config.get<number>('SMTP_PORT');
         const smtpUser = config.get<string>('SMTP_USER');
         const smtpPass = config.get<string>('SMTP_PASS');
-        const smtpSecure = config.get<boolean>('SMTP_SECURE', true);
+        const smtpSecure = config.get<boolean>('SMTP_SECURE', false);
 
         if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
-          console.warn('⚠️ SMTP configuration is incomplete. Email functionality will be disabled.');
+          console.warn(
+            '⚠️ SMTP configuration is incomplete. Email functionality will be disabled.',
+          );
           console.warn(`SMTP_HOST: ${smtpHost ? '✓' : '✗'}`);
           console.warn(`SMTP_PORT: ${smtpPort ? '✓' : '✗'}`);
           console.warn(`SMTP_USER: ${smtpUser ? '✓' : '✗'}`);
