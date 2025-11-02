@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailService } from './mail.service';
+import { MailController } from './mail.controller';
 
 @Module({
   imports: [
@@ -17,9 +18,7 @@ import { MailService } from './mail.service';
         const smtpSecure = config.get<boolean>('SMTP_SECURE', true);
 
         if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
-          console.warn(
-            '⚠️ SMTP configuration is incomplete. Email functionality will be disabled.',
-          );
+          console.warn('⚠️ SMTP configuration is incomplete. Email functionality will be disabled.');
           console.warn(`SMTP_HOST: ${smtpHost ? '✓' : '✗'}`);
           console.warn(`SMTP_PORT: ${smtpPort ? '✓' : '✗'}`);
           console.warn(`SMTP_USER: ${smtpUser ? '✓' : '✗'}`);
@@ -56,6 +55,7 @@ import { MailService } from './mail.service';
       },
     }),
   ],
+  controllers: [MailController],
   providers: [MailService],
   exports: [MailService],
 })

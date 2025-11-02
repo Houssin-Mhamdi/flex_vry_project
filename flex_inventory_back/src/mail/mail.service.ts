@@ -8,21 +8,39 @@ import { ReservationStatus } from 'src/reservation/entities/reservation.entity';
 export class MailService {
   constructor(private readonly mailerService: MailerService) {}
 
-  async sendEmailsAsync(
+  sendEmailsAsync(
     email: string,
     name: string,
     lastName: string,
     adminEmail: string,
     reservationId: number,
   ) {
-    console.log('📧 Starting to send emails...');
-    console.log(`User: ${email}, Admin: ${adminEmail}`);
+    console.log('📧 sendEmailsAsync called - starting in background');
+
+    this.sendEmailsInBackground(
+      email,
+      name,
+      lastName,
+      adminEmail,
+      reservationId,
+    ).catch((error) => {
+      console.error('❌ Background email sending failed:', error.message);
+    });
+  }
+
+  private async sendEmailsInBackground(
+    email: string,
+    name: string,
+    lastName: string,
+    adminEmail: string,
+    reservationId: number,
+  ) {
+    console.log('📧 Starting background email send...');
 
     try {
-      // Send email to user
       await this.mailerService.sendMail({
         to: email,
-        subject: 'Reservation Confirmation',
+        subject: 'Reservation Confirmation - Flex_vry Truck',
         html: `
           <h1>Hello ${name} ${lastName}!</h1>
           <p>Your reservation #${reservationId} has been confirmed.</p>
@@ -30,22 +48,42 @@ export class MailService {
       });
       console.log(`✅ User email sent to: ${email}`);
 
-      // Send email to admin
       await this.mailerService.sendMail({
         to: adminEmail,
-        subject: 'New Reservation',
+        subject: 'New Reservation Notification',
         html: `
-          <h1>New Reservation</h1>
-          <p>Reservation #${reservationId} from ${name} ${lastName}</p>
-          <p>Email: ${email}</p>
+          <h1>New Reservation Alert</h1>
+          <p><strong>Reservation ID:</strong> ${reservationId}</p>
+          <p><strong>Customer:</strong> ${name} ${lastName}</p>
+          <p><strong>Email:</strong> ${email}</p>
         `,
       });
       console.log(`✅ Admin email sent to: ${adminEmail}`);
     } catch (error) {
       console.error('❌ Email sending failed:', error.message);
       console.error('Full error:', error);
-      // Don't throw - we don't want to break the reservation
     }
+  }
+
+  // NEW: Test method for direct testing
+  async sendTestEmail(to: string) {
+    console.log(`🧪 Sending test email to: ${to}`);
+
+    const result = await this.mailerService.sendMail({
+      to: to,
+      subject: 'Test Email from Flex_vry Truck',
+      html: `
+        <h1>Test Email</h1>
+        <p>This is a test email from your Flex_vry Truck Reservation system.</p>
+        <p>If you received this, your email configuration is working! ✅</p>
+        <p>Sent at: ${new Date().toISOString()}</p>
+      `,
+    });
+
+    console.log('✅ Test email sent successfully!');
+    console.log('Result:', result);
+
+    return result;
   }
 
   async sendDriverConfirmation(
