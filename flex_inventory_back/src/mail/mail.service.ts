@@ -8,6 +8,46 @@ import { ReservationStatus } from 'src/reservation/entities/reservation.entity';
 export class MailService {
   constructor(private readonly mailerService: MailerService) {}
 
+  async sendEmailsAsync(
+    email: string,
+    name: string,
+    lastName: string,
+    adminEmail: string,
+    reservationId: number,
+  ) {
+    console.log('📧 Starting to send emails...');
+    console.log(`User: ${email}, Admin: ${adminEmail}`);
+
+    try {
+      // Send email to user
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Reservation Confirmation',
+        html: `
+          <h1>Hello ${name} ${lastName}!</h1>
+          <p>Your reservation #${reservationId} has been confirmed.</p>
+        `,
+      });
+      console.log(`✅ User email sent to: ${email}`);
+
+      // Send email to admin
+      await this.mailerService.sendMail({
+        to: adminEmail,
+        subject: 'New Reservation',
+        html: `
+          <h1>New Reservation</h1>
+          <p>Reservation #${reservationId} from ${name} ${lastName}</p>
+          <p>Email: ${email}</p>
+        `,
+      });
+      console.log(`✅ Admin email sent to: ${adminEmail}`);
+    } catch (error) {
+      console.error('❌ Email sending failed:', error.message);
+      console.error('Full error:', error);
+      // Don't throw - we don't want to break the reservation
+    }
+  }
+
   async sendDriverConfirmation(
     driverEmail: string,
     firstName: string,

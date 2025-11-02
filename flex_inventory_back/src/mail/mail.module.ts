@@ -1,3 +1,4 @@
+// mail/mail.module.ts
 import { Module } from '@nestjs/common';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -16,8 +17,27 @@ import { MailService } from './mail.service';
         const smtpSecure = config.get<boolean>('SMTP_SECURE', true);
 
         if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
-          throw new Error('SMTP configuration is incomplete');
+          console.warn(
+            '⚠️ SMTP configuration is incomplete. Email functionality will be disabled.',
+          );
+          console.warn(`SMTP_HOST: ${smtpHost ? '✓' : '✗'}`);
+          console.warn(`SMTP_PORT: ${smtpPort ? '✓' : '✗'}`);
+          console.warn(`SMTP_USER: ${smtpUser ? '✓' : '✗'}`);
+          console.warn(`SMTP_PASS: ${smtpPass ? '✓' : '✗'}`);
+          // Return a dummy transport that won't send emails
+          return {
+            transport: {
+              jsonTransport: true, // Logs emails instead of sending
+            },
+            defaults: {
+              from: '"Flex_vry Truck Reservation" <noreply@example.com>',
+            },
+          };
         }
+
+        console.log('✅ SMTP configuration loaded successfully');
+        console.log(`📧 SMTP Host: ${smtpHost}:${smtpPort}`);
+        console.log(`👤 SMTP User: ${smtpUser}`);
 
         return {
           transport: {
